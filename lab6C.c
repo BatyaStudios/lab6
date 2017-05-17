@@ -18,10 +18,12 @@
 
 int sockfd;
 
-void * KeyboardHandler (void * Arg) {
-	char Data[80];
-	while(1) {
-		if(read(2, Data, 80)){
+void *KeyboardHandler(void *Arg)
+{
+	char Data[1024];
+
+	while (1) {
+		if (read(2, Data, 80) < 80) {
 			write(sockfd, Data, strlen(Data));
 			//write(1, Data, strlen(Data));
 		}
@@ -29,26 +31,25 @@ void * KeyboardHandler (void * Arg) {
 
 }
 
-int main()
+int main(void)
 {
-	//int sockfd;
 	int len;
 	struct sockaddr_in address;
 	int result;
-	char ch = 'A';
 	char Dat;
-
-	//int flags;
-
+	char Ip[16] = {0};
 	pthread_t KeyboardHandlerThread;
-
 	char Name[32] = {0};
-	char Data[80] = {0};
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
 	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = inet_addr("192.168.1.87");
+
+	write(1, "Enter IP:(192.168.1.87)\n>:",
+	  sizeof("Enter IP:(192.168.1.87)\n>:")-1);
+	read(2, Ip, 15);
+
+	//address.sin_addr.s_addr = inet_addr("192.168.43.176");
+	address.sin_addr.s_addr = inet_addr(Ip);
 	address.sin_port = 9734;
 
 	len = sizeof(address);
@@ -59,28 +60,20 @@ int main()
 		return Lab6ErrorConnect;
 	}
 
-	printf("Welcome!\nYour name:\n>:");
+	write(1, "Connected.\nYour name:\n>:",
+	  sizeof("Connected.\nYour name:\n>:")-1);
 
 	read(2, Name, 32);
 
 	write(sockfd, Name, strlen(Name));
 
-	//flags = fcntl(2, F_GETFL, 0);
-	//fcntl(2, F_SETFL, flags | O_NONBLOCK);
-
 	pthread_create(&(KeyboardHandlerThread), null, KeyboardHandler, null);
 
-//	read(sockfd, &ch, 1);
-
-//	printf("Rx:%c", ch);
-
-	while(1) {
+	while (1) {
 		if (read(sockfd, &Dat, 1))
 			write(1, &Dat, 1);
+	}
 
- 	}
-
-	close(sockfd);
-
-	return 0;
+	//close(sockfd);
+	//return 0;
 }
