@@ -9,7 +9,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 
-#define Lab6Handlers 128
+#define Lab6Handlers 16
 
 #define Lab6ErrorThreading 2
 
@@ -36,13 +36,8 @@ struct Room {
 
 struct Room **Rooms;
 
-struct Handle {
-	pthread_t Thd;
-	int Desc;
-	byte Enabled;
-};
-
-struct Handle Handlers[Lab6Handlers] = {0};
+pthread_t Thd;
+int Arg;
 
 void SetNonBlockMode(int Desc)
 {
@@ -101,7 +96,7 @@ void *Handler(void *Arg)
 			     sizeof("Awailable rooms:\n") - 1);
 
 			for (i = 0; Rooms[i]; i++) {
-				sprintf(Data, "[%d]%s", i, Rooms[i]->Title);
+				sprintf(Data, "[%d]%s\n", i, Rooms[i]->Title);
 				write(Desc, Data, strlen(Data));
 			}
 
@@ -188,7 +183,6 @@ void *Handler(void *Arg)
 
 			while (!Quit) {
 				int j;
-				int i;
 
 				write(Desc, "\033[2J", sizeof("\033[2J"));
 				write(Desc, "[", 1);
@@ -250,18 +244,13 @@ int main(void)
 		while (1) {
 			int NewDesc = accept(server_sockfd,
 			      (struct sockaddr *)&client_address, &client_len);
-			int i = 0;
 
 			printf("New client connected.\n");
 
+			Arg = NewDesc;
 
-			while (Handlers[i].Enabled)
-				i++;
-
-			Handlers[i].Desc = NewDesc;
-
-			if (pthread_create(&(Handlers[i].Thd), null, Handler,
-					(void *)&(Handlers[i].Desc))) {
+			if (pthread_create(&Thd, null, Handler,
+					(void *)&Arg)) {
 				write(1, "Error: Unable to create Thread.\n",
 				sizeof("Error: Unable to create Thread.\n")-1);
 				return Lab6ErrorThreading;
